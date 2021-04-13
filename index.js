@@ -11,7 +11,7 @@ app.get('/api/slowGetFruit', (req,res) => {
 	var list = ['apple', 'banana', 'cherry'];
 	var time = Math.random() * 1000
 	setTimeout(() => {
-		// list.push(time + 'ms')
+		list.push(time + 'ms')
 		res.json(list);
 		console.log('Sent list of items');
 	}, time);

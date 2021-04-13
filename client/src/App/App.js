@@ -4,7 +4,6 @@ import './App.css';
 import Home from './pages/Home';
 import List from './pages/List';
 import { ApmRoute } from '@elastic/apm-rum-react'
-import { Button } from 'antd';
 
 class App extends Component {
   render() {

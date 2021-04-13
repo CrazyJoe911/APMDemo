@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState, Component } from 'react';
+import React, { useState, Component, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { withTransaction } from '@elastic/apm-rum-react'
 import {
@@ -16,7 +16,7 @@ import {
 } from 'antd';
 
 import debounce from 'lodash/debounce';
-
+import apm from '../../apm'
 class List extends Component {
   // Initialize the state
   constructor(props){
@@ -89,12 +89,33 @@ class List extends Component {
   }
 }
 
-function DebounceSelect({ fetchOptions, debounceTimeout = 800, ...props }) {
+function DebounceSelect({ fetchOptions, debounceTimeout = 800, setTransactionStart, ...props }) {
   const [fetching, setFetching] = React.useState(false);
   const [options, setOptions] = React.useState([]);
   const fetchRef = React.useRef(0);
+  const transactionRef = React.useRef(undefined);
+  const transactionStart = () => {
+    if (!transactionRef.current) {
+      console.log('Search start')
+      transactionRef.current = apm.startTransaction('Search start', 'custom')
+      console.log('transaction', transactionRef.current)
+    }
+  }
+  const transactionEnd = () => {
+    console.log(22222)
+    if (transactionRef.current && options.length) {
+      console.log('transaction.end()')
+      transactionRef.current.end()
+      transactionRef.current = undefined
+    }
+  }
+  useEffect(()=> {
+    transactionEnd()
+  }, [options])
   const debounceFetcher = React.useMemo(() => {
+
     const loadOptions = (value) => {
+      transactionStart()
       fetchRef.current += 1;
       const fetchId = fetchRef.current;
       setOptions([]);
@@ -171,10 +192,26 @@ const FormSizeDemo = () => {
   const [componentSize, setComponentSize] = useState('default');
   const [value, setValue] = React.useState([]);
   const [slowValue, setSlowValue] = React.useState([]);
-  
+  const transactionRef = React.useRef(undefined);
+  const transactionStart = () => {
+    if (!transactionRef.current) {
+      transactionRef.current = apm.startTransaction('resize component', 'custom')
+    }
+  }
+  const transactionEnd = () => {
+    if (transactionRef.current) {
+      console.log('transactionRef.current.end()')
+      transactionRef.current.end()
+      transactionRef.current = undefined
+    }
+  }
   const onFormLayoutChange = ({ size }) => {
+    transactionStart()
     setComponentSize(size);
   };
+  useEffect(() => {
+    transactionEnd()
+  }, [componentSize])
 
   return (
       <Form
@@ -197,9 +234,6 @@ const FormSizeDemo = () => {
             <Radio.Button value="default">Default</Radio.Button>
             <Radio.Button value="large">Large</Radio.Button>
           </Radio.Group>
-        </Form.Item>
-        <Form.Item label="Input">
-          <Input />
         </Form.Item>
         <Form.Item label="Select Fruit">
           <DebounceSelect
